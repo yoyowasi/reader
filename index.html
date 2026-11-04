@@ -10,12 +10,12 @@
   * { box-sizing: border-box; }
   html, body { margin: 0; height: 100%; background: #141414; color: #9c9c9c; -webkit-text-size-adjust: 100%;
     font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
-  body { overflow: hidden; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
+  body { overflow: hidden; overscroll-behavior: none; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
   #bar { position: fixed; top: env(safe-area-inset-top); left: 0; right: 0; height: 32px; display: flex;
     align-items: center; justify-content: space-between; padding: 0 10px 0 22px; font-size: 12px; color: #555; }
   #bar button { background: none; border: 0; color: #666; font-size: 18px; padding: 4px 10px; }
   #page { position: fixed; top: calc(env(safe-area-inset-top) + 36px); bottom: calc(env(safe-area-inset-bottom) + 20px);
-    left: 22px; right: 22px; overflow: hidden; }
+    left: 22px; right: 22px; overflow: hidden; touch-action: none; }
   #text { white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; font-size: var(--size); line-height: var(--line); }
   .sheet { position: fixed; left: 0; right: 0; bottom: 0; display: grid; gap: 8px; background: #1d1d1d;
     border-top: 1px solid #2a2a2a; padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); }
@@ -284,10 +284,26 @@ document.addEventListener('click', e => {
   if (button) actions[button.dataset.act]();
 });
 $('more').addEventListener('click', () => book && ($('menu').hidden ? openSheet('menu') : closeSheets()));
-page.addEventListener('click', e => {
-  if (!book) return;
+// Tap = next page; swipe right = previous page, swipe left = next page.
+let touch = null, swiped = 0;
+page.addEventListener('touchstart', e => {
+  const t = e.changedTouches[0];
+  touch = { clientX: t.clientX, clientY: t.clientY };
+}, { passive: true });
+page.addEventListener('touchend', e => {
+  const start = touch, t = e.changedTouches[0];
+  touch = null;
+  if (!book || !start) return;
+  const dx = t.clientX - start.clientX, dy = t.clientY - start.clientY;
+  if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
+  swiped = Date.now();
   if (!$('menu').hidden || !$('setup').hidden) return closeSheets();
-  if (e.clientX < innerWidth * 0.3) prev(); else next();
+  if (dx > 0) prev(); else next();
+});
+page.addEventListener('click', () => {
+  if (!book || Date.now() - swiped < 500) return;
+  if (!$('menu').hidden || !$('setup').hidden) return closeSheets();
+  next();
 });
 addEventListener('keydown', e => {
   if (!book || e.target.tagName === 'INPUT') return;
