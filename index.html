@@ -6,24 +6,34 @@
 <meta name="theme-color" content="#141414">
 <title>Reader</title>
 <style>
-  :root { --size: 17px; --line: 29px; }
+  /* --bg / --fg / --font are set from the 보기 설정 sheet; everything else is mixed from them. */
+  :root { --size: 17px; --line: 29px; --bg: #141414; --fg: #9c9c9c; --font: system-ui, sans-serif; }
   * { box-sizing: border-box; }
-  html, body { margin: 0; height: 100%; background: #141414; color: #9c9c9c; -webkit-text-size-adjust: 100%;
+  html, body { margin: 0; height: 100%; background: var(--bg); color: var(--fg); -webkit-text-size-adjust: 100%;
     font-family: system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif; }
   body { overflow: hidden; overscroll-behavior: none; user-select: none; -webkit-user-select: none; touch-action: manipulation; }
   #bar { position: fixed; top: env(safe-area-inset-top); left: 0; right: 0; height: 32px; display: flex;
-    align-items: center; justify-content: space-between; padding: 0 10px 0 22px; font-size: 12px; color: #555; }
-  #bar button { background: none; border: 0; color: #666; font-size: 18px; padding: 4px 10px; }
+    align-items: center; justify-content: space-between; padding: 0 10px 0 22px; font-size: 12px;
+    color: #555; color: color-mix(in srgb, var(--fg) 50%, var(--bg)); }
+  #bar button { background: none; border: 0; color: inherit; font-size: 18px; padding: 4px 10px; }
   #page { position: fixed; top: calc(env(safe-area-inset-top) + 36px); bottom: calc(env(safe-area-inset-bottom) + 20px);
     left: 22px; right: 22px; overflow: hidden; touch-action: none; }
-  #text { white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; font-size: var(--size); line-height: var(--line); }
-  .sheet { position: fixed; left: 0; right: 0; bottom: 0; display: grid; gap: 8px; background: #1d1d1d;
-    border-top: 1px solid #2a2a2a; padding: 14px 16px calc(16px + env(safe-area-inset-bottom)); }
+  #text { white-space: pre-wrap; overflow-wrap: anywhere; tab-size: 4; font-family: var(--font);
+    font-size: var(--size); line-height: var(--line); }
+  .sheet { position: fixed; left: 0; right: 0; bottom: 0; display: grid; gap: 8px; padding: 14px 16px calc(16px + env(safe-area-inset-bottom));
+    background: #1d1d1d; background: color-mix(in srgb, var(--bg) 90%, var(--fg));
+    border-top: 1px solid color-mix(in srgb, var(--bg) 80%, var(--fg)); }
   .sheet .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-  .sheet button, .sheet input { font: inherit; font-size: 15px; padding: 12px; border-radius: 8px; border: 1px solid #333;
-    background: #262626; color: #bbb; min-width: 0; }
+  .sheet .three { grid-template-columns: repeat(3, 1fr); }
+  .sheet .five { grid-template-columns: repeat(5, 1fr); }
+  .sheet button, .sheet input { font: inherit; font-size: 15px; padding: 12px; border-radius: 8px; color: var(--fg); min-width: 0;
+    border: 1px solid #333; border-color: color-mix(in srgb, var(--bg) 70%, var(--fg));
+    background: #262626; background: color-mix(in srgb, var(--bg) 84%, var(--fg)); }
   .sheet input { user-select: text; -webkit-user-select: text; }
-  .sheet p { margin: 2px; font-size: 13px; color: #777; word-break: break-all; }
+  .sheet input[type=color] { width: 100%; height: 44px; padding: 3px; }
+  .sheet label { display: grid; gap: 4px; font-size: 13px; }
+  .sheet p, .sheet label { margin: 2px; font-size: 13px; color: color-mix(in srgb, var(--fg) 70%, var(--bg)); word-break: break-all; }
+  .sheet .on { outline: 2px solid var(--fg); outline-offset: 1px; }
   [hidden] { display: none !important; }
 </style>
 </head>
@@ -34,8 +44,29 @@
 <div id="menu" class="sheet" hidden>
   <p id="title"></p>
   <div class="row"><button data-act="mark">책갈피 저장</button><button data-act="jump">책갈피로 이동</button></div>
+  <div class="row"><button data-act="look">보기 설정</button><button data-act="open">다른 TXT 열기</button></div>
+  <button data-act="setup">동기화 설정</button>
+</div>
+
+<div id="look" class="sheet" hidden>
+  <p>글씨체</p>
+  <div class="row three">
+    <button data-act="font" data-font="system">기본</button><button data-act="font" data-font="Nanum Gothic">나눔고딕</button>
+    <button data-act="font" data-font="Gowun Dodum">고운돋움</button><button data-act="font" data-font="Nanum Myeongjo">나눔명조</button>
+    <button data-act="font" data-font="Gowun Batang">고운바탕</button><button data-act="font" data-font="Noto Serif KR">본명조</button>
+  </div>
+  <p>테마</p>
+  <div class="row five">
+    <button data-act="theme" data-bg="#141414" data-fg="#9c9c9c" style="background:#141414;color:#9c9c9c">가</button>
+    <button data-act="theme" data-bg="#000000" data-fg="#a8a8a8" style="background:#000000;color:#a8a8a8">가</button>
+    <button data-act="theme" data-bg="#f3e9d2" data-fg="#5b4636" style="background:#f3e9d2;color:#5b4636">가</button>
+    <button data-act="theme" data-bg="#c7e5c8" data-fg="#2d3b2e" style="background:#c7e5c8;color:#2d3b2e">가</button>
+    <button data-act="theme" data-bg="#fafafa" data-fg="#222222" style="background:#fafafa;color:#222222">가</button>
+  </div>
+  <div class="row"><label>배경색<input id="bg" type="color"></label><label>글자색<input id="fg" type="color"></label></div>
   <div class="row"><button data-act="smaller">글자 작게</button><button data-act="bigger">글자 크게</button></div>
-  <div class="row"><button data-act="open">다른 TXT 열기</button><button data-act="setup">동기화 설정</button></div>
+  <div class="row"><button data-act="tighter">줄 간격 좁게</button><button data-act="looser">줄 간격 넓게</button></div>
+  <button data-act="close">닫기</button>
 </div>
 
 <div id="empty" class="sheet" hidden>
@@ -249,7 +280,9 @@ async function openBytes(name, bytes) {
   closeSheets();
   await load(saved);
 }
-function closeSheets() { for (const id of ['menu', 'setup', 'empty']) $(id).hidden = id !== 'empty' || !!book; }
+const sheets = ['menu', 'setup', 'look'];
+const sheetOpen = () => sheets.some(id => !$(id).hidden);
+function closeSheets() { for (const id of [...sheets, 'empty']) $(id).hidden = id !== 'empty' || !!book; }
 function openSheet(id) {
   closeSheets();
   $('empty').hidden = true;
@@ -263,25 +296,62 @@ function openSheet(id) {
   }
   $(id).hidden = false;
 }
-function applyFont() {
-  const size = Math.max(13, Math.min(26, local.get('font') || 17));
-  document.documentElement.style.setProperty('--size', size + 'px');
-  document.documentElement.style.setProperty('--line', Math.round(size * 1.7) + 'px');
+// ---- look: font, colors, size, line spacing ----
+const FONTS = {
+  system: 'system-ui, -apple-system, "Apple SD Gothic Neo", "Noto Sans KR", sans-serif',
+  'Nanum Gothic': '"Nanum Gothic", sans-serif', 'Gowun Dodum': '"Gowun Dodum", sans-serif',
+  'Nanum Myeongjo': '"Nanum Myeongjo", serif', 'Gowun Batang': '"Gowun Batang", serif', 'Noto Serif KR': '"Noto Serif KR", serif',
+};
+let look = { size: local.get('font') || 17, line: 1.7, font: 'system', bg: '#141414', fg: '#9c9c9c', ...local.get('look') };
+function setLook(change) {
+  look = { ...look, ...change };
+  look.size = Math.max(13, Math.min(28, look.size));
+  look.line = Math.max(1.3, Math.min(2.4, Math.round(look.line * 10) / 10));
+  local.set('look', look);
+  applyLook();
+}
+function applyLook() {
+  const root = document.documentElement.style;
+  root.setProperty('--size', look.size + 'px');
+  root.setProperty('--line', Math.round(look.size * look.line) + 'px');
+  root.setProperty('--bg', look.bg);
+  root.setProperty('--fg', look.fg);
+  root.setProperty('--font', FONTS[look.font] || FONTS.system);
+  document.querySelector('meta[name=theme-color]').content = look.bg;
+  const id = 'font-' + look.font.replace(/ /g, '-');
+  if (look.font in FONTS && look.font !== 'system' && !$(id)) {
+    document.head.append(Object.assign(document.createElement('link'), {
+      id, rel: 'stylesheet', href: `https://fonts.googleapis.com/css2?family=${look.font.replace(/ /g, '+')}&display=swap`,
+    }));
+  }
+  $('bg').value = look.bg;
+  $('fg').value = look.fg;
+  for (const b of document.querySelectorAll('[data-font]')) b.classList.toggle('on', b.dataset.font === look.font);
+  for (const b of document.querySelectorAll('[data-bg]')) b.classList.toggle('on', b.dataset.bg === look.bg && b.dataset.fg === look.fg);
   if (book) show(pos);
 }
+// Web font pieces arrive after the page was measured; measure again so no line hides past the bottom.
+document.fonts.addEventListener('loadingdone', () => book && show(pos));
+$('bg').addEventListener('input', e => setLook({ bg: e.target.value }));
+$('fg').addEventListener('input', e => setLook({ fg: e.target.value }));
 
 const actions = {
   mark() { record({ bookmark: toPoint(pos) }); closeSheets(); setNote('책갈피 저장'); },
   jump() { if (state.bookmark != null) move(toUnit(state.bookmark)); closeSheets(); },
-  smaller() { local.set('font', (local.get('font') || 17) - 1); applyFont(); },
-  bigger() { local.set('font', (local.get('font') || 17) + 1); applyFont(); },
+  look() { openSheet('look'); },
+  font(b) { setLook({ font: b.dataset.font }); },
+  theme(b) { setLook({ bg: b.dataset.bg, fg: b.dataset.fg }); },
+  smaller() { setLook({ size: look.size - 1 }); },
+  bigger() { setLook({ size: look.size + 1 }); },
+  tighter() { setLook({ line: look.line - 0.1 }); },
+  looser() { setLook({ line: look.line + 0.1 }); },
   open() { $('file').click(); },
   setup() { openSheet('setup'); },
   close() { closeSheets(); },
 };
 document.addEventListener('click', e => {
   const button = e.target.closest('[data-act]');
-  if (button) actions[button.dataset.act]();
+  if (button) actions[button.dataset.act](button);
 });
 $('more').addEventListener('click', () => book && ($('menu').hidden ? openSheet('menu') : closeSheets()));
 // Tap = next page; swipe right = previous page, swipe left = next page.
@@ -297,12 +367,12 @@ page.addEventListener('touchend', e => {
   const dx = t.clientX - start.clientX, dy = t.clientY - start.clientY;
   if (Math.abs(dx) < 40 || Math.abs(dx) < Math.abs(dy) * 1.5) return;
   swiped = Date.now();
-  if (!$('menu').hidden || !$('setup').hidden) return closeSheets();
+  if (sheetOpen()) return closeSheets();
   if (dx > 0) prev(); else next();
 });
 page.addEventListener('click', () => {
   if (!book || Date.now() - swiped < 500) return;
-  if (!$('menu').hidden || !$('setup').hidden) return closeSheets();
+  if (sheetOpen()) return closeSheets();
   next();
 });
 addEventListener('keydown', e => {
@@ -339,7 +409,7 @@ $('setup').addEventListener('submit', async e => {
   }
 });
 
-applyFont();
+applyLook();
 db('readonly', s => s.get('book'))
   .then(saved => saved ? load(saved) : closeSheets())
   .catch(() => closeSheets());
